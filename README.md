@@ -115,6 +115,10 @@ internet-facing, and free-tier apps are public by default.**
    that `app.py` sits at the top level).
 2. Go to https://share.streamlit.io and sign in with GitHub.
 3. **Create app** → pick the repo/branch → set **Main file path** to `app.py`.
+   The form pre-fills `streamlit_app.py`; either works, because the repo ships
+   a `streamlit_app.py` shim that runs `app.py`. If the field is red with
+   "This file does not exist", the Deploy button stays disabled — that is the
+   most common reason a deploy appears to hang without ever starting.
 4. Under **Advanced settings**, choose Python **3.12** or **3.13**
    (`scikit-learn==1.6.1` supports 3.9–3.13).
 5. Optional — to enable LLM answers on "Ask the Dashboard", add a secret in
