@@ -8,10 +8,11 @@ joblib==1.5.3
 lime==0.2.0.1
 fpdf2==2.8.8
 
-# Optional: enables the LLM-backed mode of "Ask the Dashboard".
-# Without it (and without an ANTHROPIC_API_KEY), that page falls back to its
-# built-in rule-based answers, so the app still runs fine.
-anthropic>=0.34
+# Enables the LLM-backed mode of "Ask the Dashboard". The app degrades
+# gracefully without it (and without an ANTHROPIC_API_KEY) to built-in
+# rule-based answers — but it is still pinned, because a failed install of
+# anything listed here fails the whole Streamlit Cloud build.
+anthropic==0.121.0
 
 # Versions are pinned exactly so a fresh install (including a Streamlit Cloud
 # rebuild) can't silently pull in a release with a new CVE — or, in

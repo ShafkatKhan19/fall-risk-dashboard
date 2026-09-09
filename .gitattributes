@@ -1,0 +1,16 @@
+# The model bundle is hash-pinned in core/config.py and verified before it is
+# unpickled. If git ever applied line-ending conversion to it (autocrlf is on
+# by default on Windows), the hash check would fail and the app would refuse
+# to start. Mark the binary artifacts explicitly so that can't happen.
+*.pkl binary
+*.png binary
+*.pdf binary
+
+# Keep source and data as normal text with LF in the repo.
+*.py text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.csv text eol=lf
+*.txt text eol=lf
