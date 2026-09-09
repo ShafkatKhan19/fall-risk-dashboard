@@ -1,0 +1,11 @@
+# Optional features, kept out of requirements.txt so the hosted deployment
+# stays inside Streamlit Community Cloud's ~1 GB memory budget.
+# The app detects both at runtime and degrades cleanly when they are absent.
+-r requirements.txt
+
+# Adds the "How patient factors shaped the prediction" (LIME) panel.
+# Drags in matplotlib + scikit-image (~81 MB) via its own dependencies.
+lime==0.2.0.1
+
+# Adds LLM-generated answers on "Ask the Dashboard" (needs ANTHROPIC_API_KEY).
+anthropic==0.121.0

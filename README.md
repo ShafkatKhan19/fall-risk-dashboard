@@ -22,6 +22,18 @@ Then open http://localhost:8501.
 
 To run the tests: `pip install -r requirements-dev.txt && pytest tests/`
 
+**Optional features.** `requirements.txt` deliberately omits two packages so
+the hosted app fits inside Streamlit Community Cloud's ~1 GB memory limit:
+
+| package | what it adds | cost |
+|---|---|---|
+| `lime` | the second explanation panel ("How patient factors shaped the prediction") | pulls matplotlib + scikit-image, ~81 MB |
+| `anthropic` | LLM answers on "Ask the Dashboard" (needs `ANTHROPIC_API_KEY`) | ~12 MB |
+
+The app detects both at runtime: without `lime` the SHAP panel simply renders
+full-width, and without `anthropic` the assistant uses its built-in rule-based
+answers. To get them locally: `pip install -r requirements-optional.txt`
+
 ## The model
 
 One model ships with this app: the MIMIC-IV-trained **Reduced Clinical +
@@ -119,9 +131,15 @@ Notes:
 - All asset paths are resolved relative to the project root (`core.config.PROJECT_ROOT`),
   not the working directory, so the app also works if it is deployed from a
   subdirectory.
-- Community Cloud containers are memory-limited. `shap` + `lime` +
-  `scikit-image`/`matplotlib` are heavy; if the app gets OOM-killed during
-  cohort analytics, lower `sample_size` in `core.cohort.cohort_mean_abs_shap`.
+- Community Cloud caps an app at roughly 1 GB of RAM, and this dependency tree
+  is heavy (`shap` alone pulls numba + llvmlite, ~147 MB). That is why `lime`
+  and `anthropic` are not in `requirements.txt` — see
+  [Optional features](#quick-start). If the app still gets OOM-killed, the most
+  likely culprit is cohort analytics: lower `sample_size` in
+  `core.cohort.cohort_mean_abs_shap`, or reduce `nsamples` there.
+- First build takes several minutes. If it never finishes, open **Manage app →
+  logs** in Streamlit Cloud; a silent restart loop there usually means the
+  container ran out of memory rather than a dependency actually failing.
 
 ## Security notes
 

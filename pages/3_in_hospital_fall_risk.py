@@ -1,7 +1,14 @@
+import importlib.util
+import logging
 import re
 
 import plotly.graph_objects as go
 import streamlit as st
+
+log = logging.getLogger(__name__)
+
+# Checked once, without importing lime (which is slow and memory-hungry).
+LIME_AVAILABLE = importlib.util.find_spec("lime") is not None
 
 from core.config import (
     COLOR_HIGH_RISK, COLOR_LOW_RISK, COLOR_MODERATE_RISK, DISCLAIMER_TEXT, RISK_TIER_COLORS,
@@ -73,8 +80,7 @@ st.header("Factors Contributing to This Risk")
 up = top_drivers(shap_values, list(fv.columns), n=5, direction="risk")
 down = top_drivers(shap_values, list(fv.columns), n=5, direction="protective")
 
-c3, c4 = st.columns(2)
-with c3:
+def _render_shap_panel():
     st.markdown("**Factors contributing to this risk (SHAP)**")
     for name, val in up:
         st.write(f":material/arrow_upward: {name}  **{val:+.3f}**")
@@ -82,30 +88,44 @@ with c3:
         st.write(f":material/arrow_downward: {name}  **{val:+.3f}**")
     if not up and not down:
         st.info("No SHAP contributions to show for this patient.")
-with c4:
-    st.markdown("**How patient factors shaped the prediction (LIME)**")
-    with st.spinner("Computing LIME explanation..."):
-        lime_pairs = None
-        try:
-            from core.lime_utils import explain_with_lime
-            lime_pairs = explain_with_lime("B", fv, num_features=8, num_samples=3000)
-        except Exception as exc:
-            st.error(f"LIME explanation unavailable: {exc}")
-    lime_up, lime_down = [], []
-    if lime_pairs:
-        lime_up = [(c, w) for c, w in lime_pairs if w > 0][:5]
-        lime_down = [(c, w) for c, w in lime_pairs if w < 0][:5]
-        for cond, w in lime_up:
-            st.write(f":material/arrow_upward: {cond}  **{w:+.3f}**")
-        for cond, w in lime_down:
-            st.write(f":material/arrow_downward: {cond}  **{w:+.3f}**")
-        if not lime_up and not lime_down:
-            st.info("No LIME contributions to show for this patient.")
 
-st.caption(
-    "SHAP and LIME may rank factors differently — this is expected, since they use "
-    "different local explanation techniques on the same prediction."
-)
+
+# LIME is an optional dependency: it is only 2 MB itself but pulls in
+# matplotlib + scikit-image (~81 MB) that it needs solely for image
+# explanations, which this dashboard never uses. That weight lands at runtime
+# exactly when memory is tightest, so the hosted build omits it. When it is
+# absent we show the SHAP panel full-width rather than a broken second column.
+lime_up, lime_down = [], []
+if LIME_AVAILABLE:
+    c3, c4 = st.columns(2)
+    with c3:
+        _render_shap_panel()
+    with c4:
+        st.markdown("**How patient factors shaped the prediction (LIME)**")
+        with st.spinner("Computing LIME explanation..."):
+            lime_pairs = None
+            try:
+                from core.lime_utils import explain_with_lime
+                lime_pairs = explain_with_lime("B", fv, num_features=8, num_samples=3000)
+            except Exception:
+                log.exception("LIME explanation failed")
+                st.info("The second explanation method is unavailable for this patient.")
+        if lime_pairs:
+            lime_up = [(c, w) for c, w in lime_pairs if w > 0][:5]
+            lime_down = [(c, w) for c, w in lime_pairs if w < 0][:5]
+            for cond, w in lime_up:
+                st.write(f":material/arrow_upward: {cond}  **{w:+.3f}**")
+            for cond, w in lime_down:
+                st.write(f":material/arrow_downward: {cond}  **{w:+.3f}**")
+            if not lime_up and not lime_down:
+                st.info("No LIME contributions to show for this patient.")
+
+    st.caption(
+        "SHAP and LIME may rank factors differently — this is expected, since they use "
+        "different local explanation techniques on the same prediction."
+    )
+else:
+    _render_shap_panel()
 
 st.success(
     ":material/check_circle: In-hospital fall risk prediction is derived from a trained "

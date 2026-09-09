@@ -5,14 +5,21 @@ scikit-learn==1.6.1  # must match the version fall_risk_model_bundle.pkl was tra
 shap==0.52.0
 plotly==6.9.0
 joblib==1.5.3
-lime==0.2.0.1
 fpdf2==2.8.8
 
-# Enables the LLM-backed mode of "Ask the Dashboard". The app degrades
-# gracefully without it (and without an ANTHROPIC_API_KEY) to built-in
-# rule-based answers — but it is still pinned, because a failed install of
-# anything listed here fails the whole Streamlit Cloud build.
-anthropic==0.121.0
+# ---------------------------------------------------------------------------
+# Deliberately NOT installed here (see requirements-optional.txt):
+#
+#   lime      — 2 MB itself, but pulls matplotlib + scikit-image + networkx
+#               (~81 MB) that it needs only for *image* explanations, which
+#               this dashboard never uses. That weight lands at runtime right
+#               when memory is tightest, and Streamlit Community Cloud caps an
+#               app at ~1 GB RAM. The LIME panel hides itself when absent.
+#   anthropic — only enables LLM answers on "Ask the Dashboard"; that page
+#               falls back to its built-in rule-based answers without it.
+#
+# Install them locally with:  pip install -r requirements-optional.txt
+# ---------------------------------------------------------------------------
 
 # Versions are pinned exactly so a fresh install (including a Streamlit Cloud
 # rebuild) can't silently pull in a release with a new CVE — or, in
