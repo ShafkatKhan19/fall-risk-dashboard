@@ -1,0 +1,20 @@
+streamlit==1.61.1
+pandas==3.0.5
+numpy==2.4.6
+scikit-learn==1.6.1  # must match the version fall_risk_model_bundle.pkl was trained with
+shap==0.52.0
+plotly==6.9.0
+joblib==1.5.3
+lime==0.2.0.1
+fpdf2==2.8.8
+
+# Optional: enables the LLM-backed mode of "Ask the Dashboard".
+# Without it (and without an ANTHROPIC_API_KEY), that page falls back to its
+# built-in rule-based answers, so the app still runs fine.
+anthropic>=0.34
+
+# Versions are pinned exactly so a fresh install (including a Streamlit Cloud
+# rebuild) can't silently pull in a release with a new CVE — or, in
+# scikit-learn's case, a version that changes the deployed model's behavior.
+# Bump deliberately and re-run `pip-audit` after any change here.
+# Dev/test-only dependencies live in requirements-dev.txt.

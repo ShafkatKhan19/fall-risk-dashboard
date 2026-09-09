@@ -1,0 +1,11 @@
+study_id,age_years,sex,hypertension,diabetes,heart_failure,gait_disorder,anxiety_disorder,cognitive_impairment,stroke_history,parkinsons_disease,arthritis,vision_impairment,hearing_impairment,fall_past_30d,fall_past_year,uses_cane_or_walker,unsteady_walking,holds_furniture_for_support,concern_about_falling,uses_arms_to_stand,difficulty_with_curb_or_step,toileting_urgency,reduced_foot_sensation,dizziness_or_fatigue_medication,sleep_or_mood_medication,low_mood
+SYN001,44,Female,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+SYN002,72,Male,1,1,1,1,0,0,0,0,1,1,0,1,1,1,1,0,1,1,1,0,1,1,0,0
+SYN003,83,Female,1,0,1,1,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1
+SYN004,65,Female,1,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,1,1,1
+SYN005,58,Male,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0
+SYN006,76,Female,1,1,0,1,1,0,0,0,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1
+SYN007,69,Male,1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0
+SYN008,88,Female,1,1,1,1,0,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1
+SYN009,52,Female,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1
+SYN010,79,Male,1,1,1,1,0,0,1,0,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,0

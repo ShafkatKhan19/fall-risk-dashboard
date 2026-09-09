@@ -1,0 +1,4 @@
+# Test-only dependencies. Deliberately NOT in requirements.txt so the deployed
+# app doesn't install a test runner it never uses.
+-r requirements.txt
+pytest==9.1.1

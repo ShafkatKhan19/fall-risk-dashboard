@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets must never be committed — set ANTHROPIC_API_KEY in the Streamlit
+# Cloud "Secrets" UI instead, not in a file.
+.streamlit/secrets.toml
+.env
+*.key
+
+# Never commit real patient data. Only the synthetic sample CSV belongs in
+# this repo; anything else dropped in data/ stays local.
+data/*
+!data/sample_patients.csv
+
+.DS_Store
+Thumbs.db
