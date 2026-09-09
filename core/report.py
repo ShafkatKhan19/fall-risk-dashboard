@@ -26,7 +26,7 @@ def build_pdf_report(
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "In-Hospital Fall Risk Prediction - Patient Summary", ln=True)
+    pdf.cell(0, 10, "Fall Risk Dashboard - Patient Summary", ln=True)
     pdf.set_font("Helvetica", "", 11)
     pdf.ln(2)
 

@@ -1,4 +1,4 @@
-# In-Hospital Fall Risk Prediction Dashboard
+# Fall Risk Dashboard
 
 > **FOR RESEARCH USE ONLY — not validated for clinical deployment.**
 > This dashboard is a research reproducibility tool. It has not been clinically

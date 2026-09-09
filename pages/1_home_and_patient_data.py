@@ -30,7 +30,7 @@ if st.session_state["entry_view"] == "welcome":
     st.markdown(
         '''
         <div class="card-hero">
-          <h1>Welcome to the In-Hospital Fall Risk Dashboard</h1>
+          <h1>Welcome to the Fall Risk Dashboard</h1>
           <p style="font-size:1.02rem; opacity:0.94; max-width:640px; margin-bottom:0;">
             This tool calculates an established fall risk score using information you
             provide. It also estimates the risk of an in-hospital fall and shows the

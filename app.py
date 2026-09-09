@@ -1,5 +1,5 @@
 """
-In-Hospital Fall Risk Prediction Dashboard — entry point.
+Fall Risk Dashboard — entry point.
 
 Run with:  streamlit run app.py
 """
@@ -33,7 +33,7 @@ def render_sidebar_chrome():
             """
             <div class="sidebar-logo">
               <div class="mark">:material/health_and_safety:</div>
-              <div class="title">In-Hospital Fall Risk<br/>Prediction Study</div>
+              <div class="title">Fall Risk Dashboard</div>
             </div>
             """,
             unsafe_allow_html=True,

@@ -6,7 +6,7 @@ one axis the spec pins down, so we don't deviate from it.
 from pathlib import Path
 
 APP_VERSION = "0.1.0"
-APP_TITLE = "In-Hospital Fall Risk Prediction Dashboard"
+APP_TITLE = "Fall Risk Dashboard"
 
 # ---------------------------------------------------------------------------
 # Paths — anchored to this file, NOT to the current working directory.
