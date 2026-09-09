@@ -138,11 +138,21 @@ h3 {
   border-bottom: 1px solid rgba(255,255,255,0.15);
   margin-bottom: 1.1rem;
 }
+/* The icon is drawn as a CSS background, NOT as a Streamlit ":material/..."
+   shortcode. Those shortcodes are only expanded in ordinary markdown and
+   widget labels — inside raw unsafe_allow_html they render as literal text,
+   which overflowed this fixed 38px box and overlapped the title. An inline
+   data-URI SVG is rendered by the browser itself, so it cannot regress. */
 .sidebar-logo .mark {
   width: 38px; height: 38px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--mid-blue), #4A93D6);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.15rem;
+  flex: 0 0 38px;
+  background-color: var(--mid-blue);
+  background-image:
+    linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath d='M12 8.5v6'/%3E%3Cpath d='M9 11.5h6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover, 21px 21px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .sidebar-logo .title {
@@ -202,14 +212,16 @@ h3 {
 /* ---------------------------------------------------------------------- */
 /* Cards                                                                  */
 /* ---------------------------------------------------------------------- */
-.card {
+/* Section cards use Streamlit's own bordered container, NOT a hand-written
+   <div class="card"> pair. Streamlit wraps every st.markdown call in its own
+   element, so an unclosed <div> is auto-closed by the browser immediately and
+   wraps nothing — that pattern rendered as empty 42px white boxes floating
+   above the content they were meant to contain. Styling the real container
+   keeps the look and cannot desynchronise from the layout. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 1.25rem 1.4rem;
-  margin-bottom: 1.1rem;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 150ms ease;
 }
 
 .card-hero {

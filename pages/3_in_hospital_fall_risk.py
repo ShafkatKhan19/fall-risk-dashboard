@@ -62,8 +62,7 @@ with c1:
     st.plotly_chart(fig, use_container_width=True)
     st.caption("This prediction is based on the patient information.")
 
-with c2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+with c2, st.container(border=True):
     st.subheader("Risk level")
     cls = {"Low Risk": "low", "Moderate Risk": "moderate", "High Risk": "high"}[tier]
     label = "HIGH RISK" if tier == "High Risk" else ("MODERATE RISK" if tier == "Moderate Risk" else "LOW RISK")
@@ -71,8 +70,11 @@ with c2:
         f'<div class="risk-badge {cls}"><span class="badge-dot {cls}"></span>{label}</div>',
         unsafe_allow_html=True,
     )
-    st.caption("Higher predicted risk compared to other patients in this study.")
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.caption({
+        "High Risk": "Higher predicted risk compared to other patients in this study.",
+        "Moderate Risk": "Moderate predicted risk compared to other patients in this study.",
+        "Low Risk": "Lower predicted risk compared to other patients in this study.",
+    }[tier])
 
 st.divider()
 st.header("Factors Contributing to This Risk")

@@ -4,6 +4,9 @@ Exact ML feature schema, matching Designer Spec Section 9.
 Column order matters: the model is trained expecting these exact columns in
 this exact order. Never reorder without retraining.
 
+Note: importing this module reads the model's explainability_config.json for
+display names (see _bundle_display_names below).
+
 This dashboard ships exactly ONE model: the real MIMIC-IV-trained
 "Reduced Clinical + STEADI" bundle (Feature Set B). Earlier revisions also
 carried synthetic placeholder RandomForests for a "Clinical only" (A) and a
@@ -11,6 +14,10 @@ carried synthetic placeholder RandomForests for a "Clinical only" (A) and a
 shipping unnecessary pickle files is both a deserialization risk and a way for
 a synthetic placeholder to be mistaken for a validated model, so they are gone.
 """
+import json
+import os
+
+from core.config import MODEL_DIR
 
 # ---------------------------------------------------------------------------
 # Reduced clinical predictors (16) — the clinical half of the deployed model.
@@ -164,6 +171,26 @@ for i in range(1, 13):
     key = [c for c in STEADI_DERIVED if c.startswith(f"steadi_s{i:02d}_")]
     if key:
         FEATURE_LABELS[key[0]] = f"STEADI Item {i}"
+
+
+def _bundle_display_names() -> dict:
+    """Display names shipped alongside the model in explainability_config.json.
+
+    These are the model authors' own labels and are far more informative than
+    the generic "STEADI Item 11" fallbacks above — that file calls item 11
+    "Sleep or mood medication". Showing a clinician "STEADI Item 11" as a
+    reason for a risk estimate is not an explanation, so the bundle's names win
+    wherever it defines one.
+    """
+    path = os.path.join(MODEL_DIR, "dashboard_v1", "explainability_config.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("feature_display_names", {}) or {}
+    except (OSError, ValueError):
+        return {}
+
+
+FEATURE_LABELS.update(_bundle_display_names())
 
 
 def label_for(column: str) -> str:

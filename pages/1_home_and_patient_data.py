@@ -43,22 +43,18 @@ if st.session_state["entry_view"] == "welcome":
 
     st.subheader("Get Started")
     c1, c2 = st.columns(2)
-    with c1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    with c1, st.container(border=True):
         st.markdown("#### :material/edit_note: Enter information manually")
         st.caption("Fill out one patient's data through a guided form.")
         if st.button("Enter data", type="primary", key="go_manual", use_container_width=True):
             go_to("manual")
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    with c2, st.container(border=True):
         st.markdown("#### :material/upload_file: Upload a CSV file")
         st.caption("Score an entire cohort at once from a spreadsheet.")
         if st.button("Upload CSV", key="go_csv", use_container_width=True):
             go_to("csv")
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.caption(f":material/info: {DISCLAIMER_TEXT}. Not intended for clinical decision-making or use in patient care.")
     st.info(
@@ -86,58 +82,54 @@ go_to("manual" if toggle == "Enter Manually" else "csv")
 # MANUAL ENTRY
 # ===========================================================================
 if st.session_state["entry_view"] == "manual":
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(":material/person: A. Patient Demographics")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        study_id = st.text_input("Study ID", value=st.session_state.get("patient_id", ""),
-                                  placeholder="Enter study ID")
-    with c2:
-        age_years = st.number_input(
-            "Enter the patient's age in years.", min_value=AGE_MIN, max_value=AGE_MAX,
-            value=st.session_state.get("form_age", AGE_MIN), step=1,
-        )
-    with c3:
-        sex = st.selectbox("Select the patient's sex.", ["— Select —"] + list(SEX_OPTIONS.keys()))
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader(":material/person: A. Patient Demographics")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            study_id = st.text_input("Study ID", value=st.session_state.get("patient_id", ""),
+                                      placeholder="Enter study ID")
+        with c2:
+            age_years = st.number_input(
+                "Enter the patient's age in years.", min_value=AGE_MIN, max_value=AGE_MAX,
+                value=st.session_state.get("form_age", AGE_MIN), step=1,
+            )
+        with c3:
+            sex = st.selectbox("Select the patient's sex.", ["— Select —"] + list(SEX_OPTIONS.keys()))
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(":material/medical_information: B. Clinical History")
-    clinical_answers = {}
-    cols = st.columns(2)
-    half = len(CLINICAL_HISTORY_FIELDS) // 2 + len(CLINICAL_HISTORY_FIELDS) % 2
-    for i, (csv_col, model_col, question) in enumerate(CLINICAL_HISTORY_FIELDS):
-        target = cols[0] if i < half else cols[1]
-        with target:
-            answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"ch_{csv_col}")
-            clinical_answers[csv_col] = answer == "Yes"
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader(":material/medical_information: B. Clinical History")
+        clinical_answers = {}
+        cols = st.columns(2)
+        half = len(CLINICAL_HISTORY_FIELDS) // 2 + len(CLINICAL_HISTORY_FIELDS) % 2
+        for i, (csv_col, model_col, question) in enumerate(CLINICAL_HISTORY_FIELDS):
+            target = cols[0] if i < half else cols[1]
+            with target:
+                answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"ch_{csv_col}")
+                clinical_answers[csv_col] = answer == "Yes"
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(":material/directions_walk: C. Fall History and Functional Status")
-    fall_30d_answer = st.radio(
-        "Has a fall been recorded in the past 30 days?", ["Yes", "No"], index=1, horizontal=True,
-        key="ch_fall_past_30d",
-    ) == "Yes"
-    steadi_c_answers = {}
-    cols = st.columns(2)
-    half = len(STEADI_FORM_MAP) // 2 + len(STEADI_FORM_MAP) % 2
-    for i, (csv_col, item_id, question) in enumerate(STEADI_FORM_MAP):
-        target = cols[0] if i < half else cols[1]
-        with target:
-            answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"st_{csv_col}")
-            steadi_c_answers[csv_col] = answer == "Yes"
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader(":material/directions_walk: C. Fall History and Functional Status")
+        fall_30d_answer = st.radio(
+            "Has a fall been recorded in the past 30 days?", ["Yes", "No"], index=1, horizontal=True,
+            key="ch_fall_past_30d",
+        ) == "Yes"
+        steadi_c_answers = {}
+        cols = st.columns(2)
+        half = len(STEADI_FORM_MAP) // 2 + len(STEADI_FORM_MAP) % 2
+        for i, (csv_col, item_id, question) in enumerate(STEADI_FORM_MAP):
+            target = cols[0] if i < half else cols[1]
+            with target:
+                answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"st_{csv_col}")
+                steadi_c_answers[csv_col] = answer == "Yes"
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(":material/medication: D. Medication and Mood Factors")
-    steadi_d_answers = {}
-    cols = st.columns(3)
-    for i, (csv_col, item_id, question) in enumerate(MEDICATION_MOOD_FORM_MAP):
-        with cols[i % 3]:
-            answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"st_{csv_col}")
-            steadi_d_answers[csv_col] = answer == "Yes"
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader(":material/medication: D. Medication and Mood Factors")
+        steadi_d_answers = {}
+        cols = st.columns(3)
+        for i, (csv_col, item_id, question) in enumerate(MEDICATION_MOOD_FORM_MAP):
+            with cols[i % 3]:
+                answer = st.radio(question, ["Yes", "No"], index=1, horizontal=True, key=f"st_{csv_col}")
+                steadi_d_answers[csv_col] = answer == "Yes"
 
     b1, b2 = st.columns([1, 1])
     with b1:
@@ -176,16 +168,15 @@ if st.session_state["entry_view"] == "manual":
 # CSV UPLOAD
 # ===========================================================================
 else:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(":material/upload_file: Upload CSV")
-    st.caption(
-        "Header row required, column names must exactly match the schema below "
-        "(case-sensitive). One row = one patient. UTF-8, 50 MB max, 10,000 rows max."
-    )
-    with st.expander("Required columns"):
-        st.code(", ".join(RAW_FORM_COLUMNS))
-    uploaded = st.file_uploader("CSV file", type=["csv"], key="csv_uploader")
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader(":material/upload_file: Upload CSV")
+        st.caption(
+            "Header row required, column names must exactly match the schema below "
+            "(case-sensitive). One row = one patient. UTF-8, 50 MB max, 10,000 rows max."
+        )
+        with st.expander("Required columns"):
+            st.code(", ".join(RAW_FORM_COLUMNS))
+        uploaded = st.file_uploader("CSV file", type=["csv"], key="csv_uploader")
 
     MAX_CSV_ROWS = 10_000
 

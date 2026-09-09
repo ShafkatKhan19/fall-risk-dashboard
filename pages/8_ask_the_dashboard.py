@@ -7,7 +7,7 @@ from core.assistant import answer_question, build_context_summary, llm_available
 st.title("Ask the Dashboard")
 st.caption(
     "Ask about the current patient's scores, prediction, or what's driving their "
-    "risk. Grounded only in what's already on Tabs 1-5 \u2014 no outside data."
+    "risk. Grounded only in this patient's data already in the dashboard \u2014 no outside data."
 )
 
 if llm_available():

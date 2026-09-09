@@ -6,9 +6,10 @@ from core.cohort import cohort_mean_abs_shap, risk_tier_counts
 
 st.title("Cohort Analytics")
 st.caption(
-    "Batch view across every patient in a CSV uploaded on Patient Data Entry. "
-    "Separate from the patient-specific SHAP tab \u2014 this is the one place "
-    "population-level patterns are shown, and only for the cohort you uploaded."
+    "Batch view across every patient in a CSV uploaded on Home & Patient Data. "
+    "Separate from the patient-specific explanations on In-Hospital Fall Risk "
+    "\u2014 this is the one place population-level patterns are shown, and only "
+    "for the cohort you uploaded."
 )
 
 scored = st.session_state.get("cohort_results")

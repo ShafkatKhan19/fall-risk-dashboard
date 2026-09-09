@@ -13,7 +13,7 @@ Two modes, chosen automatically:
      with no external API dependency.
 
 Nothing here trains on or stores patient data outside the session; the
-summary sent to the LLM is exactly what's already visible on Tabs 1-5.
+summary sent to the LLM is exactly what's already visible in the dashboard.
 """
 import logging
 import os
@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 from core.config import RISK_TIER_ACTIONS
 from core.features import label_for
 from core.shap_utils import top_drivers
+from core.steadi import risk_level
 
 DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
@@ -118,7 +119,8 @@ def _answer_with_rules(question: str, context: str) -> str:
         shap_values = s.get("shap_values")
         fv = s.get("feature_vector")
         if shap_values is None or fv is None:
-            return "Run a prediction on Tab 4 first \u2014 I need a SHAP result to explain drivers."
+            return ("Open **In-Hospital Fall Risk** first \u2014 I need that page's result "
+                     "to explain what drove the prediction.")
         up = top_drivers(shap_values, list(fv.columns), n=3, direction="risk")
         down = top_drivers(shap_values, list(fv.columns), n=3, direction="protective")
         parts = []
@@ -131,29 +133,30 @@ def _answer_with_rules(question: str, context: str) -> str:
     if "probability" in q or "risk" in q and "tier" not in q:
         prob = s.get("prediction_probability")
         if prob is None:
-            return "No prediction has been run yet \u2014 complete Tab 4 first."
+            return "No prediction has been run yet \u2014 open **In-Hospital Fall Risk** first."
         return (f"Predicted fall probability is {_fmt_pct(prob)}, "
                 f"tier: {s.get('prediction_risk_tier')}.")
 
     if "steadi" in q:
         if s.get("steadi_score") is None:
-            return "STEADI hasn't been completed yet (Tab 2)."
-        return f"STEADI total: {s['steadi_score']} / 14 ({s.get('prediction_risk_tier', '')})."
+            return "No STEADI score yet — fill in the form on **Home & Patient Data** first."
+        return f"STEADI total: {s['steadi_score']} / 14 ({risk_level(s['steadi_score'])})."
 
     if "jhfrat" in q:
-        if s.get("jhfrat_score") is None:
-            return "JHFRAT hasn't been completed yet (Tab 3)."
-        return f"JHFRAT total: {s['jhfrat_score']} / 35."
+        return ("JHFRAT is not available in this open-access dashboard. Researchers "
+                 "wanting to use it should obtain authorization directly from Johns "
+                 "Hopkins University.")
 
     if "recommend" in q or "do" in q or "action" in q:
         tier = s.get("prediction_risk_tier")
         if not tier:
-            return "Run a prediction first (Tab 4) to get a tier-based recommendation."
+            return ("Open **In-Hospital Fall Risk** first to get a tier-based "
+                     "recommendation.")
         return f"For {tier}: {RISK_TIER_ACTIONS.get(tier)}."
 
     return ("Here's what I currently have on this patient:\n\n" + context +
-            "\n\nAsk me about their STEADI/JHFRAT scores, predicted risk, "
-            "or what's driving that risk.")
+            "\n\nAsk me about their STEADI score, predicted risk, or what's "
+            "driving that risk.")
 
 
 def answer_question(question: str) -> str:

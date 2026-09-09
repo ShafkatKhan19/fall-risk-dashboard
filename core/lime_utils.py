@@ -8,6 +8,7 @@ samples, not real patient data, matching the privacy note in that file.
 """
 import json
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -44,14 +45,45 @@ def build_lime_explainer():
 
 
 def _friendly_condition(condition: str, feature_order: list) -> str:
-    """Swap the raw feature-name token in a LIME condition for its display label."""
-    tokens = (
-        condition.replace("<=", " ").replace(">=", " ").replace("<", " ").replace(">", " ").split()
+    """Swap the raw feature-name token in a LIME condition for its display label.
+
+    LIME emits conditions in several shapes depending on the feature type:
+        "dx_parkinsons=0"                  (categorical, no spaces)
+        "steadi_s02_pts_(max_2) <= 0.00"   (spaced comparison)
+        "0.00 < fall_30d <= 1.00"          (two-sided range)
+    Splitting on comparison operators alone missed the first form entirely, so
+    categorical features rendered as raw model variable names in the UI. The
+    explainability contract shipped with the model explicitly says not to show
+    raw variable names when a display name exists, so match all three shapes.
+    """
+    spaced = condition
+    for op in ("<=", ">=", "==", "!=", "<", ">", "="):
+        spaced = spaced.replace(op, " ")
+    tokens = spaced.split()
+
+    # Longest match first: "steadi_s02_pts_(max_2)" must not lose to a shorter
+    # feature name that happens to be a prefix of it.
+    raw_name = next(
+        (t for t in sorted(tokens, key=len, reverse=True) if t in feature_order), None
     )
-    raw_name = next((t for t in tokens if t in feature_order), None)
     if raw_name is None:
-        return condition
-    return condition.replace(raw_name, label_for(raw_name))
+        return condition.strip()
+
+    label = label_for(raw_name)
+
+    # Keep the value: "absent" and "present" push the prediction in opposite
+    # directions, so showing only the feature name would be actively misleading.
+    match = re.search(
+        rf"{re.escape(raw_name)}\s*(?:<=|>=|==|!=|<|>|=)\s*(-?\d+(?:\.\d+)?)", condition
+    )
+    if not match:
+        return label
+    value = float(match.group(1))
+    if value == 0:
+        return f"{label} — no"
+    if value == 1:
+        return f"{label} — yes"
+    return f"{label} — {value:g}"
 
 
 def explain_with_lime(feature_set_key: str, X_row: pd.DataFrame, num_features=10, num_samples=5000):

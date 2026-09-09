@@ -32,7 +32,7 @@ def render_sidebar_chrome():
         st.markdown(
             """
             <div class="sidebar-logo">
-              <div class="mark">:material/health_and_safety:</div>
+              <div class="mark"></div>
               <div class="title">Fall Risk Dashboard</div>
             </div>
             """,
