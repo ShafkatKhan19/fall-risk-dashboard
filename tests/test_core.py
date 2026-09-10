@@ -30,6 +30,47 @@ def test_bundle_feature_order_matches_app_schema():
     assert bundle["shap_background"].shape[1] == len(FEATURE_SET_B)
 
 
+def test_unsupported_features_are_flagged():
+    """A patient with hearing impairment must be flagged as outside the
+    model's training support. Hearing impairment appears in 0.006% of the
+    training data, so the scaler turns a 'yes' into a ~130 sigma value and the
+    prediction collapses to ~0%. The dashboard must say the estimate is
+    unreliable rather than present that 0% as a finding."""
+    import numpy as np
+
+    from core.model import get_estimator
+    from core.model_support import audit_feature_support
+
+    row = {c: 0.0 for c in FEATURE_SET_B}
+    row["age_cat_65plus"] = 1.0
+    row["dx_hearing"] = 1.0
+    X = np.array([[row[c] for c in FEATURE_SET_B]])
+
+    flagged = audit_feature_support(get_estimator("B"), X, FEATURE_SET_B)
+    columns = [f.column for f in flagged]
+    assert "dx_hearing" in columns
+    hearing = next(f for f in flagged if f.column == "dx_hearing")
+    assert hearing.lowers_risk, "hearing impairment should be flagged as lowering risk"
+    assert hearing.train_prevalence < 0.01
+
+
+def test_supported_features_are_not_flagged():
+    """Common inputs must NOT be flagged, or the warning becomes noise."""
+    import numpy as np
+
+    from core.model import get_estimator
+    from core.model_support import audit_feature_support
+
+    row = {c: 0.0 for c in FEATURE_SET_B}
+    row["age_cat_65plus"] = 1.0
+    row["dx_hypertension"] = 1.0   # 33% of training rows
+    row["steadi_s11_pts_(1pt)"] = 1.0  # 44% of training rows
+    X = np.array([[row[c] for c in FEATURE_SET_B]])
+
+    flagged = audit_feature_support(get_estimator("B"), X, FEATURE_SET_B)
+    assert flagged == [], f"common features should not be flagged, got {flagged}"
+
+
 def test_flags_from_total_conserves_points():
     """flags_from_total must never drop points while back-distributing a
     pre-computed STEADI total across the 12 item columns (0-14 inclusive)."""

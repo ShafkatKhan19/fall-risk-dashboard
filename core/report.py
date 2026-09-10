@@ -22,6 +22,7 @@ def build_pdf_report(
     shap_down,
     lime_up,
     lime_down,
+    unsupported=(),
 ) -> bytes:
     pdf = FPDF()
     pdf.add_page()
@@ -40,9 +41,25 @@ def build_pdf_report(
     if steadi_score is not None:
         line(f"STEADI Score: {steadi_score} / 14")
     line(f"Predicted In-Hospital Fall Risk: {proba * 100:.1f}%")
-    line(f"Risk Tier: {tier}")
+    line(f"Risk Tier: {'NOT RELIABLE (see note below)' if unsupported else tier}")
     if threshold is not None:
         line(f"Model decision threshold: {threshold:.4f}")
+
+    # The on-screen unreliability warning must travel with the PDF: a report
+    # that leaves the app without it could be read as a real 0% finding.
+    if unsupported:
+        pdf.ln(3)
+        pdf.set_font("Helvetica", "B", 11)
+        line("WARNING - THIS ESTIMATE IS NOT RELIABLE FOR THIS PATIENT")
+        pdf.set_font("Helvetica", "", 10)
+        line(
+            "The model has almost no training data for the factors below, so answering "
+            "'yes' to them pushes the estimate down instead of up. The percentage above "
+            "is uninformative for this patient."
+        )
+        for f in unsupported:
+            line(f"  - {f.label}: present in {f.train_prevalence * 100:.3f}% of training data")
+        pdf.set_font("Helvetica", "", 11)
 
     if shap_up or shap_down:
         pdf.ln(4)
