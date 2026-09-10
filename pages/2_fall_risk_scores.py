@@ -53,6 +53,9 @@ with st.container(border=True):
 
 st.info("Only STEADI is available in this open-access dashboard.")
 
+if st.button("Continue to In-Hospital Fall Risk →", type="primary"):
+    st.switch_page("pages/3_in_hospital_fall_risk.py")
+
 with st.expander("STEADI item detail"):
     import pandas as pd
     from core.steadi import STEADI_ITEMS

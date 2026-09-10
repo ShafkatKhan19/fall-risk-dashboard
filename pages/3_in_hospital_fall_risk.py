@@ -16,7 +16,7 @@ from core.config import (
 from core.model import run_prediction
 from core.report import build_pdf_report
 from core.session import reset_patient
-from core.shap_utils import compute_shap, top_drivers
+from core.shap_utils import compute_shap, contribution_figure, top_drivers
 
 st.title("Estimated Risk of In-Hospital Fall")
 
@@ -84,12 +84,17 @@ down = top_drivers(shap_values, list(fv.columns), n=5, direction="protective")
 
 def _render_shap_panel():
     st.markdown("**Factors contributing to this risk (SHAP)**")
-    for name, val in up:
-        st.write(f":material/arrow_upward: {name}  **{val:+.3f}**")
-    for name, val in down:
-        st.write(f":material/arrow_downward: {name}  **{val:+.3f}**")
-    if not up and not down:
+    fig = contribution_figure(up + down, x_title="Contribution to prediction")
+    if fig is None:
         st.info("No SHAP contributions to show for this patient.")
+        return
+    st.plotly_chart(fig, use_container_width=True, key="shap_chart",
+                    config={"displayModeBar": False})
+    with st.expander("Show these as a list"):
+        for name, val in up:
+            st.write(f":material/arrow_upward: {name}  **{val:+.3f}**")
+        for name, val in down:
+            st.write(f":material/arrow_downward: {name}  **{val:+.3f}**")
 
 
 # LIME is an optional dependency: it is only 2 MB itself but pulls in
@@ -115,10 +120,15 @@ if LIME_AVAILABLE:
         if lime_pairs:
             lime_up = [(c, w) for c, w in lime_pairs if w > 0][:5]
             lime_down = [(c, w) for c, w in lime_pairs if w < 0][:5]
-            for cond, w in lime_up:
-                st.write(f":material/arrow_upward: {cond}  **{w:+.3f}**")
-            for cond, w in lime_down:
-                st.write(f":material/arrow_downward: {cond}  **{w:+.3f}**")
+            lime_fig = contribution_figure(lime_up + lime_down, x_title="Impact on prediction")
+            if lime_fig is not None:
+                st.plotly_chart(lime_fig, use_container_width=True, key="lime_chart",
+                                config={"displayModeBar": False})
+                with st.expander("Show these as a list"):
+                    for cond, w in lime_up:
+                        st.write(f":material/arrow_upward: {cond}  **{w:+.3f}**")
+                    for cond, w in lime_down:
+                        st.write(f":material/arrow_downward: {cond}  **{w:+.3f}**")
             if not lime_up and not lime_down:
                 st.info("No LIME contributions to show for this patient.")
 

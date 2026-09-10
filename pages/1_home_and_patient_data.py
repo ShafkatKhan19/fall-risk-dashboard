@@ -11,6 +11,9 @@ from core.patient_form import (
     RAW_FORM_COLUMNS,
     SEX_OPTIONS,
     STEADI_FORM_MAP,
+    build_csv_example,
+    build_csv_template,
+    csv_column_reference,
     load_row_into_session,
 )
 from core.session import reset_patient
@@ -162,7 +165,9 @@ if st.session_state["entry_view"] == "manual":
             row.update(steadi_c_answers)
             row.update(steadi_d_answers)
             load_row_into_session(row, st.session_state)
-            st.success("Patient data saved. Continue to **Fall Risk Scores** in the sidebar.")
+            # Take the user straight to the next step rather than making them
+            # find it in the sidebar.
+            st.switch_page("pages/2_fall_risk_scores.py")
 
 # ===========================================================================
 # CSV UPLOAD
@@ -171,11 +176,34 @@ else:
     with st.container(border=True):
         st.subheader(":material/upload_file: Upload CSV")
         st.caption(
-            "Header row required, column names must exactly match the schema below "
+            "Header row required, column names must exactly match the template "
             "(case-sensitive). One row = one patient. UTF-8, 50 MB max, 10,000 rows max."
         )
-        with st.expander("Required columns"):
-            st.code(", ".join(RAW_FORM_COLUMNS))
+
+        t1, t2 = st.columns(2)
+        with t1:
+            st.download_button(
+                ":material/download: Download blank template",
+                data=build_csv_template(),
+                file_name="fall_risk_template.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="Headers plus one example row showing the accepted values. "
+                     "Delete the example row and fill in your own patients.",
+            )
+        with t2:
+            st.download_button(
+                ":material/download: Download filled example (10 patients)",
+                data=build_csv_example(),
+                file_name="fall_risk_example_patients.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="10 synthetic patients you can upload as-is to try the batch flow.",
+            )
+
+        with st.expander("Column reference"):
+            st.dataframe(csv_column_reference(), use_container_width=True, hide_index=True)
+
         uploaded = st.file_uploader("CSV file", type=["csv"], key="csv_uploader")
 
     MAX_CSV_ROWS = 10_000

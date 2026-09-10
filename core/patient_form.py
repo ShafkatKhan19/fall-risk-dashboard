@@ -132,6 +132,67 @@ def full_row_to_features(row: dict) -> dict:
     return features
 
 
+def _question_for(csv_col: str) -> str:
+    for group in (CLINICAL_HISTORY_FIELDS, FALL_HISTORY_FIELDS):
+        for col, _model, question in group:
+            if col == csv_col:
+                return question
+    for col, _item, question in ALL_STEADI_FORM_MAP:
+        if col == csv_col:
+            return question
+    return {
+        "study_id": "A de-identified study ID (letters and numbers only).",
+        "age_years": "The patient's age in years.",
+        "sex": "The patient's sex.",
+    }.get(csv_col, "")
+
+
+def _allowed_for(csv_col: str) -> str:
+    if csv_col == "study_id":
+        return "text, 1-20 letters/numbers"
+    if csv_col == "age_years":
+        return f"integer {AGE_MIN}-{AGE_MAX}"
+    if csv_col == "sex":
+        return " | ".join(SEX_OPTIONS)
+    return "0 or 1"
+
+
+def csv_column_reference():
+    """A table describing every column the upload expects."""
+    import pandas as pd
+
+    return pd.DataFrame(
+        {
+            "column": RAW_FORM_COLUMNS,
+            "allowed values": [_allowed_for(c) for c in RAW_FORM_COLUMNS],
+            "question": [_question_for(c) for c in RAW_FORM_COLUMNS],
+        }
+    )
+
+
+def build_csv_template() -> str:
+    """Blank upload template: the header row plus one example row, so users can
+    see the accepted values instead of guessing from the column names."""
+    example = {c: "0" for c in RAW_FORM_COLUMNS}
+    example["study_id"] = "EXAMPLE01"
+    example["age_years"] = "78"
+    example["sex"] = "Female"
+    header = ",".join(RAW_FORM_COLUMNS)
+    row = ",".join(example[c] for c in RAW_FORM_COLUMNS)
+    return f"{header}\n{row}\n"
+
+
+def build_csv_example() -> str:
+    """The shipped 10-patient synthetic sample, for trying the batch flow."""
+    from core.config import DATA_DIR
+
+    path = DATA_DIR / "sample_patients.csv"
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return build_csv_template()
+
+
 def load_row_into_session(row: dict, session_state) -> None:
     """Populate session_state exactly as manual entry's "Save & Continue" does,
     from one raw-form row (a dict matching RAW_FORM_COLUMNS — e.g. one row of

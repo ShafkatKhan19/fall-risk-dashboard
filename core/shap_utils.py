@@ -62,13 +62,23 @@ def top_drivers(shap_values, columns, n=3, direction="risk"):
     return [(label_for(col), val) for col, val in pairs[:n]]
 
 
-def waterfall_figure(shap_values, columns, base_value, final_value, top_n=15):
-    pairs = sorted(zip(columns, shap_values), key=lambda p: abs(p[1]), reverse=True)[:top_n]
-    pairs = sorted(pairs, key=lambda p: p[1])  # ascending for a clean waterfall read
+def contribution_figure(labelled_pairs, x_title="Contribution to prediction", top_n=8):
+    """Horizontal bar chart of per-feature contributions.
 
-    labels = [label_for(c) for c, _ in pairs]
+    Takes already-labelled (display_name, value) pairs so the same chart serves
+    both SHAP values and LIME weights. Red bars push the predicted risk up,
+    green bars push it down; the zero line makes the split obvious at a glance.
+    """
+    pairs = sorted(labelled_pairs, key=lambda p: abs(p[1]), reverse=True)[:top_n]
+    pairs = sorted(pairs, key=lambda p: p[1])  # ascending reads cleanly top-to-bottom
+
+    if not pairs:
+        return None
+
+    labels = [name for name, _ in pairs]
     values = [v for _, v in pairs]
     colors = [COLOR_HIGH_RISK if v > 0 else COLOR_LOW_RISK for v in values]
+    span = max(abs(v) for v in values) or 1.0
 
     fig = go.Figure(
         go.Bar(
@@ -78,15 +88,22 @@ def waterfall_figure(shap_values, columns, base_value, final_value, top_n=15):
             marker_color=colors,
             text=[f"{v:+.3f}" for v in values],
             textposition="outside",
+            cliponaxis=False,
+            hovertemplate="%{y}<br>%{x:+.3f}<extra></extra>",
         )
     )
     fig.update_layout(
-        title=f"Base rate {base_value:.2f} \u2192 Predicted P(fall) {final_value:.2f}",
-        xaxis_title="Contribution to prediction",
-        margin=dict(l=10, r=10, t=50, b=10),
-        height=max(360, 28 * len(labels)),
+        xaxis_title=x_title,
+        xaxis=dict(range=[-span * 1.45, span * 1.45], zeroline=False),
+        # automargin lets Plotly reserve whatever width the longest feature
+        # label needs; a fixed left margin clipped names like "Medication
+        # associated with dizziness or fatigue".
+        yaxis=dict(automargin=True, ticklabelposition="outside"),
+        margin=dict(l=10, r=20, t=10, b=40),
+        height=max(300, 44 * len(labels)),
         plot_bgcolor="white",
         showlegend=False,
+        bargap=0.35,
     )
     fig.add_vline(x=0, line_width=1, line_color=COLOR_MID_BLUE)
     return fig
