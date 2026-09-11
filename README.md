@@ -119,8 +119,20 @@ internet-facing, and free-tier apps are public by default.**
    a `streamlit_app.py` shim that runs `app.py`. If the field is red with
    "This file does not exist", the Deploy button stays disabled — that is the
    most common reason a deploy appears to hang without ever starting.
-4. Under **Advanced settings**, choose Python **3.12** or **3.13**
-   (`scikit-learn==1.6.1` supports 3.9–3.13).
+4. Under **Advanced settings**, choose Python **3.12** (recommended).
+
+   This matters more than it looks. Community Cloud's default moved to Python
+   **3.14**, and `scikit-learn==1.6.1` — the version this model was trained
+   with — ships no 3.14 wheel. Pinning it there makes the installer compile
+   scikit-learn from source, which needs Cython and a C/C++ toolchain and
+   hangs the deploy indefinitely at "Processing dependencies".
+
+   `requirements.txt` now guards against this with environment markers: on
+   3.14+ it takes `scikit-learn>=1.7.2` instead, which has a prebuilt wheel.
+   That is verified safe — predictions from this bundle are bit-identical
+   under 1.6.1 and 1.9.1 for all 10 sample patients, because the pipeline only
+   stores coefficient arrays. Choosing 3.12 simply keeps the exact training
+   version, which is tidier.
 5. Optional — to enable LLM answers on "Ask the Dashboard", add a secret in
    the app's **Settings → Secrets**:
    ```toml

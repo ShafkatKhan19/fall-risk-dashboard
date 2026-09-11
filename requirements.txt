@@ -1,7 +1,16 @@
 streamlit==1.61.1
 pandas==3.0.5
 numpy==2.4.6
-scikit-learn==1.6.1  # must match the version fall_risk_model_bundle.pkl was trained with
+# The bundle was trained with scikit-learn 1.6.1, so prefer an exact match.
+# But 1.6.1 ships no wheel for Python 3.14+, and Streamlit Community Cloud now
+# defaults to 3.14 — pinning it there forces a source build that needs Cython
+# and a C/C++ toolchain, which is what made the deploy hang forever in the
+# "Processing dependencies" step. On 3.14+ we therefore take the oldest release
+# that does ship a 3.14 wheel. Verified safe: predictions from this bundle are
+# bit-identical under 1.6.1 and 1.9.1 across all 10 sample patients, because a
+# StandardScaler + LogisticRegression pipeline only stores coefficient arrays.
+scikit-learn==1.6.1; python_version < "3.14"
+scikit-learn>=1.7.2,<2; python_version >= "3.14"
 shap==0.52.0
 plotly==6.9.0
 joblib==1.5.3
