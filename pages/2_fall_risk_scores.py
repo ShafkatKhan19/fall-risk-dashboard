@@ -8,8 +8,15 @@ st.title("Your Fall Risk Score")
 st.caption("Scores are calculated from the information you provided.")
 
 if st.session_state.get("steadi_score") is None:
-    st.warning("Complete **Home & Patient Data** first — the STEADI score is calculated "
-               "automatically from that form.")
+    if st.session_state.get("cohort_results") is not None:
+        st.warning(
+            "You have an uploaded cohort but no individual patient selected. Go to "
+            "**Home & Patient Data** and use *Show a different patient's individual "
+            "results* to pick one."
+        )
+    else:
+        st.warning("Complete **Home & Patient Data** first — the STEADI score is "
+                   "calculated automatically from that form.")
     st.stop()
 
 total = st.session_state["steadi_score"]

@@ -48,10 +48,14 @@ DEFAULTS = {
     "cohort_errors": None,
     "cohort_upload_name": None,
     "cohort_row_count": None,
+    # Identity of the file already processed, so a rerun doesn't re-read the
+    # uploader and wipe results that were just computed.
+    "cohort_upload_token": None,
 }
 
 _COHORT_KEYS = ("cohort_df", "cohort_results", "cohort_valid_df",
-                "cohort_errors", "cohort_upload_name", "cohort_row_count")
+                "cohort_errors", "cohort_upload_name", "cohort_row_count",
+                "cohort_upload_token")
 
 
 def init_session_state():

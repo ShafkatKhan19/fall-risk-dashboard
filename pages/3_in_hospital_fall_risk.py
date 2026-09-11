@@ -27,7 +27,15 @@ comorb_ok = st.session_state.get("comorbidities_complete", False)
 steadi_ok = st.session_state.get("steadi_complete", False)
 
 if not (demo_ok and comorb_ok and steadi_ok):
-    st.warning("Complete **Home & Patient Data** first — every field on that form feeds this prediction.")
+    if st.session_state.get("cohort_results") is not None:
+        st.warning(
+            "You have an uploaded cohort but no individual patient selected. Go to "
+            "**Home & Patient Data** and use *Show a different patient's individual "
+            "results* to pick one."
+        )
+    else:
+        st.warning("Complete **Home & Patient Data** first — every field on that form "
+                   "feeds this prediction.")
     st.stop()
 
 if st.session_state.get("prediction_probability") is None:

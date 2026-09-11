@@ -208,15 +208,28 @@ else:
 
     MAX_CSV_ROWS = 10_000
 
-    # A NEW file was just picked in this run — (re)validate it and stash the
-    # result in session_state. Streamlit's file_uploader does NOT keep its
-    # uploaded bytes across a page switch in a multipage app: navigating to
-    # another tab and back always resets `uploaded` to None, even though the
-    # user never "removed" anything. Everything below therefore reads from
-    # session_state, not from `uploaded` directly, so a previously uploaded
-    # and scored cohort keeps showing up here (and stays available to load a
-    # patient from) no matter how many times you switch tabs.
-    if uploaded is not None:
+    # Process an upload ONLY when the file is genuinely new.
+    #
+    # `uploaded` is truthy on every single rerun while a file sits in the
+    # widget, not just on the run where it was picked. Re-running this block
+    # unconditionally therefore wiped cohort_results on every interaction —
+    # including the rerun caused by clicking "Run Batch Prediction" itself, so
+    # results were cleared immediately after being computed. That is why the
+    # button appeared to need several presses and why the scored cohort never
+    # reached the other tabs. Comparing an identity token fixes it.
+    #
+    # Note the results deliberately live in session_state, not in `uploaded`:
+    # Streamlit's file_uploader drops its bytes when you navigate to another
+    # page and back, so reading from the widget would lose the cohort on every
+    # tab switch. Session state keeps it until "Clear uploaded cohort" or a
+    # browser refresh.
+    def _upload_token(f):
+        if f is None:
+            return None
+        return (getattr(f, "file_id", None), f.name, getattr(f, "size", None))
+
+    token = _upload_token(uploaded)
+    if token is not None and token != st.session_state.get("cohort_upload_token"):
         try:
             df = pd.read_csv(uploaded, nrows=MAX_CSV_ROWS + 1)
         except Exception:
@@ -229,12 +242,12 @@ else:
 
         if df is not None:
             valid_df, errors = validate_raw_form_csv(df)
+            st.session_state["cohort_upload_token"] = token
             st.session_state["cohort_upload_name"] = uploaded.name
             st.session_state["cohort_row_count"] = len(df)
             st.session_state["cohort_valid_df"] = valid_df
             st.session_state["cohort_errors"] = errors
-            # A fresh upload invalidates any previous batch-prediction results
-            # for the old file — force "Run Batch Prediction" again.
+            # A genuinely new file invalidates results scored from the old one.
             st.session_state["cohort_results"] = None
 
     valid_df = st.session_state.get("cohort_valid_df")
@@ -260,26 +273,35 @@ else:
                         scored = score_cohort_raw(valid_df)
                     st.session_state["cohort_df"] = valid_df
                     st.session_state["cohort_results"] = scored
+                    # Load the first patient straight away so Fall Risk Scores
+                    # and In-Hospital Fall Risk have something to show. Without
+                    # this those tabs tell a user who just uploaded a cohort to
+                    # "complete the form first", which reads as broken.
+                    load_row_into_session(valid_df.iloc[0].to_dict(), st.session_state)
                     st.rerun()
             else:
+                loaded_id = st.session_state.get("patient_id", "")
                 st.success(
-                    f"Scored {len(scored)} patients. Open **Cohort Analytics** in the sidebar "
-                    "for the full breakdown, or load one patient below to see their individual "
-                    "Fall Risk Score and In-Hospital Fall Risk."
+                    f"Scored {len(scored)} patients. **{loaded_id}** is loaded into "
+                    "**Fall Risk Scores** and **In-Hospital Fall Risk** — pick another "
+                    "below to switch, or open **Cohort Analytics** for the whole group."
                 )
 
                 study_ids = scored["study_id"].astype(str).tolist()
-                selected_id = st.selectbox("Load one patient's individual results", study_ids)
-                if st.button("Load selected patient"):
+                default_idx = study_ids.index(loaded_id) if loaded_id in study_ids else 0
+                selected_id = st.selectbox(
+                    "Show a different patient's individual results",
+                    study_ids, index=default_idx,
+                )
+                if st.button("Load selected patient") and selected_id != loaded_id:
                     row = valid_df[valid_df["study_id"].astype(str) == selected_id].iloc[0].to_dict()
                     load_row_into_session(row, st.session_state)
-                    st.success(
-                        f"Loaded **{selected_id}**. Open **Fall Risk Scores** or "
-                        "**In-Hospital Fall Risk** in the sidebar."
-                    )
+                    st.rerun()
 
                 if st.button("Clear uploaded cohort", type="secondary"):
                     for key in ("cohort_df", "cohort_results", "cohort_valid_df",
-                                "cohort_errors", "cohort_upload_name", "cohort_row_count"):
+                                "cohort_errors", "cohort_upload_name", "cohort_row_count",
+                                "cohort_upload_token"):
                         st.session_state[key] = None
+                    reset_patient()
                     st.rerun()
